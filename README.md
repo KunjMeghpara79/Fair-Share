@@ -42,15 +42,15 @@ Copy group codes with one click
 🔑 Authentication
 
 Login Page
-![Login Page](./Screenshots/Login-Page.png)  
+![Login Page](./Screenshots/Login-Page.PNG)  
 
 
 Sign Up Page
-![Register Page](./Screenshots/Register-Page.png) 
+![Register Page](./Screenshots/Register-Page.PNG) 
 
 
 📊 Dashboard
-![Dashboard](./Screenshots/Dashboard.png) 
+![Dashboard](./Screenshots/Dashboard.PNG) 
 
 Group Overview
 
