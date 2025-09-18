@@ -3,7 +3,7 @@ import { toast } from "react-hot-toast";
 
 // ----------------- Create Axios Instance -----------------
 const api = axios.create({
-  baseURL: "http://localhost:8080/", // Spring Boot backend
+  baseURL: import.meta.env.VITE_API_URL, // Spring Boot backend
   withCredentials: true, // required if backend uses cookies
 });
 
