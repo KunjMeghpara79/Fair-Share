@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: Fair-Share
+  data:
+    mongodb:
+      uri: mongodb+srv://kunj_2210:BoXO4oqNc2GzBfVy@cluster0.kf98g63.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      database: Fair-Share
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 649806980196-nhcs98ihen9g0dukvmsvu639u66tmd38.apps.googleusercontent.com
+            client-secret: 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
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: fairshare69@gmail.com   # your Gmail
+    password: ziga xvbz zkec emhm       # ⚠️ use App Password, not your Gmail password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
