@@ -326,16 +326,12 @@ export default function Auth() {
 
                 {/* Google login */}
                 <div style={{ width: "50%", marginTop: "10px", marginLeft: "25%" }}>
-                  {loading ? (
-                    <button type="button" disabled>
-                      Processing<LoadingDots />
-                    </button>
-                  ) : (
+               
                     <GoogleLogin
                       onSuccess={handleGoogleLoginSuccess}
                       onError={() => setMessage("❌ Google login failed")}
                     />
-                  )}
+                  
                 </div>
 
                 <p>
