@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import api from "../api/axios";
 import toast, { Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import GroupDetails from "./GroupDetails";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -14,10 +15,13 @@ export default function Dashboard() {
   // search state
   const [searchQuery, setSearchQuery] = useState("");
 
+
   // join group states
   const [joinLoading, setJoinLoading] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [groupCodeInput, setGroupCodeInput] = useState("");
+  const [instate, setInstate] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
 
   // create group states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -127,7 +131,30 @@ export default function Dashboard() {
           <span>Code: {code}</span>
           <span>Created on {formattedDate}</span>
         </div>
-        <button className="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-400 text-white py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-xl hover:scale-105 cursor-pointer">
+        <button
+          onClick={async () => {
+            setInstate(true);
+            try {
+                const res = await api.post(
+                    "/Groups/Get-Groupbycode",
+                    code, // send as plain string
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "text/plain", // important! not application/json
+                        },
+                    }
+                );
+                setSelectedGroup({ name, members, code, createdAt ,description: res.data.description,});
+
+                // Assuming API returns a single object, not array
+            } catch (err) {
+                console.error("Failed to fetch group:", err);
+                toast.error("Failed to load group", { position: "top-center" });
+            }
+            
+          }}
+          className="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-400 text-white py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-xl hover:scale-105 cursor-pointer">
           ₹ View Expenses
         </button>
       </div>
@@ -166,11 +193,6 @@ export default function Dashboard() {
             />
           </div>
 
-          {/* User Info
-          <div className="flex items-center gap-2 bg-blue-100 px-3 py-2 rounded-2xl flex-shrink-0">
-            <FaUserCircle size={24} className="text-blue-600" />
-            <span className="font-semibold text-gray-800 truncate max-w-[100px] sm:max-w-[150px]">{localStorage.getItem("name")}</span>
-          </div> */}
 
           {/* Logout */}
           <motion.button whileHover={{ scale: 1.05 }} onClick={handleLogout} className="flex h-9 items-center gap-2 px-4 sm:px-5 py-2.5 rounded-2xl font-bold text-red-700 bg-red-100 hover:bg-red-200 transition cursor-pointer flex-shrink-0">
@@ -181,13 +203,32 @@ export default function Dashboard() {
 
       {/* MAIN CONTENT */}
       <main className="flex-1 px-4 sm:px-8 py-8 sm:py-14 flex flex-col overflow-y-auto items-center">
-        <motion.div initial={{ opacity: 0, y: -40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="w-full max-w-screen-xl">
+        {(instate && selectedGroup) ? (
+        <GroupDetails selectedGroup={selectedGroup}
+          onBack={() => {
+            setSelectedGroup(null);
+            setInstate(false);
+          }}
+        />
+        ) : (
+        <motion.div
+          initial={{ opacity: 0, y: -40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="w-full max-w-screen-xl"
+        >
           {/* Header & Actions */}
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4 sm:gap-8">
             <div className="max-w-2xl">
-              <h2 className="text-3xl sm:text-2xl font-extrabold text-gray-900 leading-snug">Welcome {localStorage.getItem("name")?.split(" ")[0]} !</h2>
-              <h2 className="text-3xl sm:text-5xl font-extrabold text-gray-900 leading-snug">Your Groups</h2>
-              <p className="text-gray-600 text-base sm:text-lg mt-2 sm:mt-4 leading-relaxed">Manage shared expenses with clarity, fairness, and zero stress.</p>
+              <h2 className="text-3xl sm:text-2xl font-extrabold text-gray-900 leading-snug">
+                Welcome {localStorage.getItem("name")?.split(" ")[0]}!
+              </h2>
+              <h2 className="text-3xl sm:text-5xl font-extrabold text-gray-900 leading-snug">
+                Your Groups
+              </h2>
+              <p className="text-gray-600 text-base sm:text-lg mt-2 sm:mt-4 leading-relaxed">
+                Manage shared expenses with clarity, fairness, and zero stress.
+              </p>
             </div>
             <div className="flex gap-3 sm:gap-5 flex-wrap">
               <motion.button
@@ -224,100 +265,111 @@ export default function Dashboard() {
               </div>
             ) : filteredGroups.length === 0 ? (
               <div className="flex flex-col justify-center items-center w-full min-h-[60vh]">
-                <p className="text-gray-600 text-center text-xl">
-                  No Groups Found.
-                </p>
+                <p className="text-gray-600 text-center text-xl">No Groups Found.</p>
               </div>
             ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 mt-6 w-full justify-center">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 mt-6 w-full justify-center"
+              >
                 {filteredGroups.map((group, idx) => (
-                  <GroupCard key={idx} name={group.name} members={group.members?.length || 0} code={group.groupcode} createdAt={group.createdAt} />
+                  <GroupCard
+                    key={idx}
+                    name={group.name}
+                    members={group.members?.length || 0}
+                    code={group.groupcode}
+                    createdAt={group.createdAt}
+                  />
                 ))}
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* JOIN GROUP MODAL */}
+          {showJoinModal && (
+            <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 px-4">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-sm shadow-2xl flex flex-col gap-4"
+              >
+                <h3 className="text-2xl font-bold text-gray-800">Join a Group</h3>
+                <input
+                  type="text"
+                  placeholder="Enter group code"
+                  value={groupCodeInput}
+                  onChange={(e) => setGroupCodeInput(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <div className="flex justify-end gap-2 sm:gap-4 mt-2 flex-wrap">
+                  <button
+                    onClick={() => setShowJoinModal(false)}
+                    className="cursor-pointer px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleJoinGroup}
+                    disabled={joinLoading}
+                    className="cursor-pointer px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {joinLoading ? "Joining..." : "Join"}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* CREATE GROUP MODAL */}
+          {showCreateModal && (
+            <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 px-4">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-sm shadow-2xl flex flex-col gap-4"
+              >
+                <h3 className="text-2xl font-bold text-gray-800">Create a Group</h3>
+                <input
+                  type="text"
+                  placeholder="Enter group name"
+                  value={newGroup.name}
+                  onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
+                  className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Enter description"
+                  value={newGroup.description}
+                  onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })}
+                  className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+
+                <div className="flex justify-end gap-2 sm:gap-4 mt-2 flex-wrap">
+                  <button
+                    onClick={() => setShowCreateModal(false)}
+                    className="cursor-pointer px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateGroup}
+                    disabled={createLoading}
+                    className="cursor-pointer px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {createLoading ? "Creating..." : "Create"}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
         </motion.div>
-
-        {/* JOIN GROUP MODAL */}
-        {showJoinModal && (
-          <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 px-4">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-sm shadow-2xl flex flex-col gap-4"
-            >
-              <h3 className="text-2xl font-bold text-gray-800">Join a Group</h3>
-              <input
-                type="text"
-                placeholder="Enter group code"
-                value={groupCodeInput}
-                onChange={(e) => setGroupCodeInput(e.target.value)}
-                className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-              <div className="flex justify-end gap-2 sm:gap-4 mt-2 flex-wrap">
-                <button
-                  onClick={() => setShowJoinModal(false)}
-                  className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleJoinGroup}
-                  disabled={joinLoading}
-                  className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {joinLoading ? "Joining..." : "Join"}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-
-        {/* CREATE GROUP MODAL */}
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 px-4">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-sm shadow-2xl flex flex-col gap-4"
-            >
-              <h3 className="text-2xl font-bold text-gray-800">Create a Group</h3>
-              <input
-                type="text"
-                placeholder="Enter group name"
-                value={newGroup.name}
-                onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-              <input
-                type="text"
-                placeholder="Enter description"
-                value={newGroup.description}
-                onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-
-              <div className="flex justify-end gap-2 sm:gap-4 mt-2 flex-wrap">
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateGroup}
-                  disabled={createLoading}
-                  className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {createLoading ? "Creating..." : "Create"}
-                </button>
-              </div>
-            </motion.div>
-          </div>
         )}
       </main>
+
     </div>
   );
 }
+

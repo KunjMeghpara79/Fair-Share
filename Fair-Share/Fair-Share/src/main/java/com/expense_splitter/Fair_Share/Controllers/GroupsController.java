@@ -28,6 +28,16 @@ public class GroupsController {
         return gservice.joingroup(code);
     }
 
+    @PostMapping("/Get-Transactions")
+    public ResponseEntity<?> getsettlements(@RequestBody String groupcode){
+        return gservice.gettransaction(groupcode);
+    }
+
+    @PostMapping("/Get-Groupbycode")
+    public ResponseEntity<?> getgroupbyid(@RequestBody String groupcode){
+        return gservice.getbycode(groupcode);
+    }
+
     @GetMapping("/Get-Groups")
     public ResponseEntity<?> getgroups(){
         return gservice.getgroups();

@@ -36,6 +36,7 @@ public class GroupsService {
     @Autowired
     private SettlementRepo srepo;
 
+
     @Autowired
     private TransactionService transactionService;
     @Autowired
@@ -213,4 +214,25 @@ public class GroupsService {
     }
 
 
+    public ResponseEntity<?> gettransaction(String groupcode) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (!auth.isAuthenticated()){
+            return new ResponseEntity<>("you are not authenticated",HttpStatus.FORBIDDEN);
+        }
+       if (transactionRepo.findBygroupcode(groupcode) == null){
+           return new ResponseEntity<>("Settlement not found",HttpStatus.NOT_FOUND);
+       }
+        return new ResponseEntity<>(transactionRepo.findBygroupcode(groupcode),HttpStatus.OK);
+    }
+
+    public ResponseEntity<?> getbycode(String groupcode) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (!auth.isAuthenticated()){
+            return new ResponseEntity<>("you are not authenticated",HttpStatus.FORBIDDEN);
+        }
+        if (repo.findBygroupcode(groupcode) == null){
+            return new ResponseEntity<>("Settlement not found",HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(repo.findBygroupcode(groupcode),HttpStatus.OK);
+    }
 }
