@@ -154,7 +154,7 @@ public class GroupsService {
                     repo.delete(grp);
                     return new ResponseEntity<>("Group Deleted",HttpStatus.OK);
                 }
-                else return new ResponseEntity<>("You can not delete the group",HttpStatus.FORBIDDEN);
+                else return new ResponseEntity<>("Only creator of the group can delete the group",HttpStatus.FORBIDDEN);
             }
         }
 
@@ -247,6 +247,7 @@ public class GroupsService {
         Map<String, Object> response = new HashMap<>();
         response.put("id", group.getId().toString());
         response.put("name", group.getName());
+        response.put("CreatedAt",group.getCreatedAt());
         response.put("groupcode", group.getGroupcode());
         response.put("description", group.getDescription());
         response.put("members", memberIds);

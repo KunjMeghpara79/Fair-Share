@@ -138,7 +138,7 @@ export default function Dashboard() {
               );
               //console.log(res.data);
 
-              setSelectedGroup({ name: res.data.name, members: res.data.members, code: res.data.groupcode, description: res.data.description });
+              setSelectedGroup({ name: res.data.name, members: res.data.members, code: res.data.groupcode, CreatedAt: res.data.CreatedAt, description: res.data.description });
               //console.log(selectedGroup);
 
             } catch (err) {
@@ -198,6 +198,7 @@ export default function Dashboard() {
             onBack={() => {
               setSelectedGroup(null);
               setInstate(false);
+              fetchGroups();
             }}
           />
         ) : (
@@ -286,8 +287,8 @@ export default function Dashboard() {
                   className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
                 />
                 <div className="flex justify-end gap-2 mt-4">
-                  <button onClick={() => setShowJoinModal(false)} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition">Cancel</button>
-                  <button onClick={handleJoinGroup} disabled={joinLoading} className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                  <button onClick={() => setShowJoinModal(false)} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition cursor-pointer">Cancel</button>
+                  <button onClick={handleJoinGroup} disabled={joinLoading} className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                     {joinLoading ? "Joining..." : "Join"}
                   </button>
                 </div>
@@ -302,16 +303,17 @@ export default function Dashboard() {
                   onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
                   className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
                 />
-                <input
-                  type="text"
+                <textarea
                   placeholder="Enter description"
                   value={newGroup.description}
                   onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })}
-                  className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full mt-2"
+                  rows={4} // adjust the number of visible lines
+                  className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full mt-2 resize-none"
                 />
+
                 <div className="flex justify-end gap-2 mt-4">
-                  <button onClick={() => setShowCreateModal(false)} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition">Cancel</button>
-                  <button onClick={handleCreateGroup} disabled={createLoading} className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                  <button onClick={() => setShowCreateModal(false)} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition cursor-pointer">Cancel</button>
+                  <button onClick={handleCreateGroup} disabled={createLoading} className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                     {createLoading ? "Creating..." : "Create"}
                   </button>
                 </div>

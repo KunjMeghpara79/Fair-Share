@@ -12,7 +12,6 @@ export default function GroupDetails({ selectedGroup, onBack }) {
   useEffect(() => {
     if (!selectedGroup) return;
 
-
     const fetchTransactions = async () => {
       setLoading(true);
       try {
@@ -30,26 +29,20 @@ export default function GroupDetails({ selectedGroup, onBack }) {
         setTransactions(response.data.transactions || []);
       } catch (error) {
         console.error("Failed to load transactions:", error);
-        toast.error(error.response?.data?.message || "Failed to load transactions");
+        toast.error(
+          error.response?.data?.message || "Failed to load transactions"
+        );
       } finally {
         setLoading(false);
       }
     };
 
     const fetchMembers = async () => {
-      
-      
-      // if (!selectedGroup?.members?.length) return;
-
-
-
       setLoadingMembers(true);
       try {
         const fetchedMembers = await Promise.all(
           selectedGroup.members.map(async (id) => {
             try {
-              
-              
               const res = await api.post(
                 "/get-namebyid",
                 { id: id.toString() },
@@ -60,8 +53,6 @@ export default function GroupDetails({ selectedGroup, onBack }) {
                   },
                 }
               );
-            
-              
               return { name: res.data };
             } catch (err) {
               console.error(`Failed to fetch member ${id}:`, err);
@@ -82,6 +73,38 @@ export default function GroupDetails({ selectedGroup, onBack }) {
     fetchMembers();
   }, [selectedGroup]);
 
+  // 🔴 Delete Group Handler
+  const handleDeleteGroup = async () => {
+    if (!selectedGroup) return;
+
+    if (!window.confirm("Are you sure you want to delete this group?")) return;
+
+    try {
+
+      const response = await api.delete("/Groups/Delete-Group", {
+        headers: {
+          "Content-Type": "text/plain",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        data: selectedGroup.code,  // 👈 put body inside "data"
+      });
+
+
+      if (response.status === 200) {
+        // ✅ Navigate to dashboard (remove group)
+        onBack();
+      } else {
+        // ❌ Show backend error
+        toast.error(response.data?.message || "Failed to delete group");
+      }
+    } catch (error) {
+      console.error("Delete group failed:", error);
+      toast.error(
+        error.response?.data || "Failed to delete group"
+      );
+    }
+  };
+
   if (!selectedGroup) {
     return (
       <div className="w-full max-w-4xl mx-auto mt-10 px-4">
@@ -99,18 +122,32 @@ export default function GroupDetails({ selectedGroup, onBack }) {
 
   return (
     <div className="w-full max-w-4xl mx-auto mt-10 px-4 flex flex-col gap-6">
-      <button
-        onClick={onBack}
-        className="cursor-pointer self-start px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-      >
-        ← Back to Groups
-      </button>
+      <div className="flex justify-between items-center gap-x-2">
+        <button
+          onClick={onBack}
+          className="cursor-pointer px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+        >
+          ← Back to Groups
+        </button>
+
+        <button
+          onClick={handleDeleteGroup}
+          className="cursor-pointer px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+        >
+          🗑 Delete Group
+        </button>
+      </div>
+
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h1 className="text-3xl font-bold">{groupData?.name || selectedGroup.name}</h1>
+        <h1 className="text-3xl font-bold">
+          {groupData?.name || selectedGroup.name}
+        </h1>
         <p className="text-gray-600 text-sm sm:text-base">
           <b> Code: </b>
-          <span className="font-mono">{groupData?.code || selectedGroup.code}</span>
+          <span className="font-mono">
+            {groupData?.code || selectedGroup.code}
+          </span>
         </p>
       </div>
 
@@ -148,11 +185,16 @@ export default function GroupDetails({ selectedGroup, onBack }) {
           </div>
         ) : transactions.length > 0 ? (
           transactions.map((txn, index) => (
-            <div key={index} className="text-gray-700 flex items-center gap-2 border-b last:border-none pb-2">
+            <div
+              key={index}
+              className="text-gray-700 flex items-center gap-2 border-b last:border-none pb-2"
+            >
               <span className="font-medium">{txn.fromUser.split(" ")[0]}</span>
               <span className="text-blue-500 font-bold">→</span>
               <span className="font-medium">{txn.toUser.split(" ")[0]}</span>
-              <span className="ml-auto font-semibold text-green-600">₹{txn.amount.toFixed(2)}</span>
+              <span className="ml-auto font-semibold text-green-600">
+                ₹{txn.amount.toFixed(2)}
+              </span>
             </div>
           ))
         ) : (
