@@ -63,19 +63,19 @@ Group Overview
 
 Frontend: React.js, Tailwind CSS
 
-Backend: Spring Boot (or Node.js, depending on your backend setup)
+Backend: Spring Boot 
 
-Database: MySQL / MongoDB
+Database: MongoDB
 
 Authentication: JWT, Google OAuth
 
-Deployment: (Add if deployed, e.g., Vercel, Netlify, Heroku)
+
 
 ⚡ Installation & Setup
 
 Clone the repository
 
-git clone https://github.com/your-username/fairshare.git
+git clone https://github.com/KunjMeghpara79/Fair-Share.git
 cd fairshare
 
 
@@ -91,23 +91,14 @@ npm run dev
 
 Backend setup
 
-Configure application.properties / .env for database connection
+Configure application.yml 
 
-Run Spring Boot / Node.js backend
+Run Spring Boot
 
 Open app
 Visit http://localhost:5173
  in your browser.
 
-📌 Roadmap
-
- Add expense charts & analytics
-
- Enable bill upload & OCR scanning
-
- Notifications for expense updates
-
- Multi-currency support
 
 🤝 Contributing
 
