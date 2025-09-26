@@ -1,6 +1,7 @@
 package com.expense_splitter.Fair_Share.Controllers;
 
 import com.expense_splitter.Fair_Share.DTO.Emailpassword;
+import com.expense_splitter.Fair_Share.DTO.Objid;
 import com.expense_splitter.Fair_Share.DTO.emailandotp;
 import com.expense_splitter.Fair_Share.Entity.users;
 import com.expense_splitter.Fair_Share.Service.ForgotPasswordService;
@@ -10,6 +11,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -110,6 +112,12 @@ public class UserController {
     @PostMapping("/change-password")
     public ResponseEntity<?> changepassword(@RequestBody Emailpassword emailpassword){
          return  forgotPasswordService.changepssword(emailpassword);
+    }
+
+    @PostMapping("/get-namebyid")
+    public ResponseEntity<?> getnamebyid(@RequestBody Objid obj){
+        ObjectId objectId = new ObjectId(obj.getId());
+        return service.findusername(objectId);
     }
 
     

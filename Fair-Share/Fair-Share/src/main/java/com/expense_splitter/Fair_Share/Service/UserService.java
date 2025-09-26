@@ -3,12 +3,14 @@ package com.expense_splitter.Fair_Share.Service;
 import com.expense_splitter.Fair_Share.DTO.Authresponse;
 import com.expense_splitter.Fair_Share.Entity.users;
 import com.expense_splitter.Fair_Share.Repository.UserRepo;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,19 @@ public class UserService {
             repo.save(user);
         }
         return user;
+    }
+
+    public ResponseEntity<?> findusername(ObjectId id){
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (!auth.isAuthenticated()){
+            return new ResponseEntity<>("You are not Authenticated." ,HttpStatus.UNAUTHORIZED);
+        }
+        users u = repo.findByid(id);
+        if (u ==  null){
+            return new ResponseEntity<>("User not found ",HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(u.getName(),HttpStatus.OK);
     }
 
     public ResponseEntity<?> saveuser(users user) {

@@ -15,7 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class GroupsService {
@@ -227,12 +229,30 @@ public class GroupsService {
 
     public ResponseEntity<?> getbycode(String groupcode) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (!auth.isAuthenticated()){
-            return new ResponseEntity<>("you are not authenticated",HttpStatus.FORBIDDEN);
+        if (auth == null || !auth.isAuthenticated()) {
+            return new ResponseEntity<>("you are not authenticated", HttpStatus.FORBIDDEN);
         }
-        if (repo.findBygroupcode(groupcode) == null){
-            return new ResponseEntity<>("Settlement not found",HttpStatus.NOT_FOUND);
+
+        var group = repo.findBygroupcode(groupcode);
+        if (group == null) {
+            return new ResponseEntity<>("Settlement not found", HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(repo.findBygroupcode(groupcode),HttpStatus.OK);
+
+        // Convert ObjectIds to string
+        List<String> memberIds = group.getMembers().stream()
+                .map(ObjectId::toString)
+                .toList();
+
+        // Build response map
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", group.getId().toString());
+        response.put("name", group.getName());
+        response.put("groupcode", group.getGroupcode());
+        response.put("description", group.getDescription());
+        response.put("members", memberIds);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+
 }

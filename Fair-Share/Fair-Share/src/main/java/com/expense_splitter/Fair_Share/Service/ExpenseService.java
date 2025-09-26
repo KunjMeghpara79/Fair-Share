@@ -39,6 +39,9 @@ public class ExpenseService {
         if (auth.isAuthenticated()) {
             String email = auth.getName();
             users adder = userRepo.findByemail(email);
+            if(expenseRequest.getAmount() < 0 ){
+                return new ResponseEntity<>("Amount can not be less than zero",HttpStatus.BAD_REQUEST);
+            }
 
             // 1. ✅ Find group by groupCode
             Groups group = groupRepo.findBygroupcode(expenseRequest.getGroupcode());
