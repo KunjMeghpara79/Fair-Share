@@ -4,6 +4,7 @@ import com.expense_splitter.Fair_Share.Entity.Expenses;
 import com.expense_splitter.Fair_Share.Entity.Groups;
 import com.expense_splitter.Fair_Share.Entity.Settlement;
 import com.expense_splitter.Fair_Share.Entity.users;
+import com.expense_splitter.Fair_Share.Enums.SplitType;
 import com.expense_splitter.Fair_Share.Repository.GroupRepo;
 import com.expense_splitter.Fair_Share.Repository.SettlementRepo;
 import com.expense_splitter.Fair_Share.Repository.UserRepo;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class SettlementService {
@@ -156,28 +156,65 @@ public class SettlementService {
         if (settlement == null) {
             throw new Exception("Settlement not found");
         }
+
         String payerName = expense.getPayername();
         double amount = expense.getAmount();
 
-        // Reverse payer's credit
-        for (Settlement.Balance bal : settlement.getBalances()) {
-            if (Objects.equals(bal.getUserName(), payerName)) {
-                bal.setNetAmount(bal.getNetAmount() - amount);
-            }
-        }
+        // Determine split type
+        SplitType splitType = expense.getSplitType(); // "EQUAL", "CUSTOM", "PERCENTAGE"
 
-        // Reverse members' debts (❌ exclude payer if he is in splitDetails)
-        for (Expenses.SplitDetail detail : expense.getSplitDetails()) {
-                for (Settlement.Balance bal : settlement.getBalances()) {
-                    if (bal.getUserName().equals(detail.getName())) {
-                        bal.setNetAmount(bal.getNetAmount() + detail.getShareAmount());
+        switch (splitType) {
+            case EQUAL:
+                // Equal split: reverse as amount / total members
+                Groups group = grepo.findBygroupcode(expense.getGroupcode());
+                int totalMembers = group.getMembers().size();
+                double share = amount / totalMembers;
+
+                for (ObjectId memberId : group.getMembers()) {
+                    users member = repo.findByid(memberId);
+                    if (member.getName().equals(payerName)) {
+                        updateBalance(settlement, payerName, -(amount - share)); // reverse payer credit
+                    } else {
+                        updateBalance(settlement, member.getName(), share); // reverse debt
                     }
                 }
+                break;
 
+            case CUSTOM:
+                // Custom split: reverse exact shareAmount
+                for (Expenses.SplitDetail detail : expense.getSplitDetails()) {
+                    String memberName = detail.getName();
+                    double shareAmount = detail.getShareAmount();
+                    if (memberName.equals(payerName)) {
+                        updateBalance(settlement, payerName, -(amount - shareAmount));
+                    } else {
+                        updateBalance(settlement, memberName, shareAmount);
+                    }
+                }
+                break;
+
+            case PERCENTAGE:
+                // Percentage split: reverse amount * percentage / 100
+                for (Expenses.SplitDetail detail : expense.getSplitDetails()) {
+                    String memberName = detail.getName();
+                    double shareAmount = (amount * detail.getPercentage()) / 100.0;
+                    if (memberName.equals(payerName)) {
+                        updateBalance(settlement, payerName, -(amount - shareAmount));
+                    } else {
+                        updateBalance(settlement, memberName, shareAmount);
+                    }
+                }
+                break;
+
+            default:
+                throw new Exception("Unknown split type: " + splitType);
         }
+
         srepo.save(settlement);
         transactionService.generateTransactionsFromSettlement(settlement);
     }
+
+
 
 
 

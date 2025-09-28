@@ -194,6 +194,17 @@ export default function Auth() {
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
+
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+
+    if (!passwordRegex.test(newPassword)) {
+      setMessage(
+        "❌ Password must be at least 6 characters, include uppercase, lowercase, number, and special character."
+      );
+      return; // Stop submission if invalid
+    }
+
     setLoading(true);
     try {
       const res = await fetch("http://localhost:8080/change-password", {
@@ -203,6 +214,7 @@ export default function Auth() {
       });
 
       if (!res.ok) throw new Error("Failed to change password");
+
       setMessage("✅ Password changed successfully. Please login.");
       setForgotStep("email");
       setShowForgot(false);
@@ -212,6 +224,7 @@ export default function Auth() {
       setLoading(false);
     }
   };
+
 
   return (
     <div id="container" className={`container ${mode}`}>
@@ -326,12 +339,12 @@ export default function Auth() {
 
                 {/* Google login */}
                 <div style={{ width: "50%", marginTop: "10px", marginLeft: "25%" }}>
-               
-                    <GoogleLogin
-                      onSuccess={handleGoogleLoginSuccess}
-                      onError={() => setMessage("❌ Google login failed")}
-                    />
-                  
+
+                  <GoogleLogin
+                    onSuccess={handleGoogleLoginSuccess}
+                    onError={() => setMessage("❌ Google login failed")}
+                  />
+
                 </div>
 
                 <p>

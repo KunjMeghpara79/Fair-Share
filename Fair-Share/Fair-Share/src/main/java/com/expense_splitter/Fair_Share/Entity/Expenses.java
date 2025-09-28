@@ -2,6 +2,8 @@ package com.expense_splitter.Fair_Share.Entity;
 
 import com.expense_splitter.Fair_Share.Enums.Currency;
 import com.expense_splitter.Fair_Share.Enums.SplitType;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,6 +21,7 @@ import static com.expense_splitter.Fair_Share.Enums.Currency.INR;
 public class Expenses {
 
     @Id
+    @JsonSerialize(using = ToStringSerializer.class)
     private ObjectId id;
 
     private String description;
@@ -30,9 +33,12 @@ public class Expenses {
     private String payername;
     private ObjectId payer=null;
 
+    private String adder;
+
     private List<SplitDetail> splitDetails=null;
     private SplitType splitType = SplitType.EQUAL;
 
+    @JsonSerialize(using = ToStringSerializer.class)
     private ObjectId addedBy=null;
 
 

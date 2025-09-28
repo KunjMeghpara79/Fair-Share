@@ -11,7 +11,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [searchQuery, setSearchQuery] = useState("");
 
   // Join group states
@@ -125,6 +124,7 @@ export default function Dashboard() {
         <button
           onClick={async () => {
             setInstate(true);
+             setSearchQuery("");
             try {
               const res = await api.post(
                 "/Groups/Get-Groupbycode",
@@ -136,11 +136,7 @@ export default function Dashboard() {
                   },
                 }
               );
-              //console.log(res.data);
-
               setSelectedGroup({ name: res.data.name, members: res.data.members, code: res.data.groupcode, CreatedAt: res.data.CreatedAt, description: res.data.description });
-              //console.log(selectedGroup);
-
             } catch (err) {
               console.error("Failed to fetch group:", err);
               toast.error("Failed to load group", { position: "top-center" });
@@ -162,6 +158,7 @@ export default function Dashboard() {
   return (
     <div className="h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-50 flex flex-col font-inter antialiased">
       <Toaster />
+
       {/* NAVBAR */}
       <nav className="bg-white/70 backdrop-blur-lg border-b border-blue-100 shadow-lg px-4 sm:px-8 py-3 flex flex-wrap justify-between items-center sticky top-0 z-20 rounded-b-2xl gap-3">
         <motion.h1
@@ -177,7 +174,7 @@ export default function Dashboard() {
             <FaSearch className="text-gray-600" />
             <input
               type="text"
-              placeholder="Search groups..."
+              placeholder={instate ? "Search expenses..." : "Search groups..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-transparent focus:outline-none w-full text-sm sm:text-base"
@@ -195,12 +192,16 @@ export default function Dashboard() {
         {instate && selectedGroup ? (
           <GroupDetails
             selectedGroup={selectedGroup}
+            searchQuery={searchQuery}        // pass the search text
+            setSearchQuery={setSearchQuery}  // allow updating from GroupDetails
             onBack={() => {
               setSelectedGroup(null);
               setInstate(false);
               fetchGroups();
+              setSearchQuery("");            // ✅ reset search when going back
             }}
           />
+
         ) : (
           <motion.div
             initial={{ opacity: 0, y: -40 }}
@@ -242,6 +243,7 @@ export default function Dashboard() {
               </div>
             </div>
             <br />
+
             {/* GROUPS GRID */}
             <AnimatePresence mode="wait">
               {loading ? (
@@ -307,10 +309,9 @@ export default function Dashboard() {
                   placeholder="Enter description"
                   value={newGroup.description}
                   onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })}
-                  rows={4} // adjust the number of visible lines
+                  rows={4}
                   className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full mt-2 resize-none"
                 />
-
                 <div className="flex justify-end gap-2 mt-4">
                   <button onClick={() => setShowCreateModal(false)} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition cursor-pointer">Cancel</button>
                   <button onClick={handleCreateGroup} disabled={createLoading} className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">

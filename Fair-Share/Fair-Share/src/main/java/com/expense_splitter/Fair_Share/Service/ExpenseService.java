@@ -57,7 +57,7 @@ public class ExpenseService {
 
             users u = userRepo.findByname(expenseRequest.getPayername());
             if (u == null) {
-                throw new IllegalArgumentException("Payer not found: " + expenseRequest.getPayername());
+                return new ResponseEntity<>("Please Select the name." ,HttpStatus.FORBIDDEN);
             }
             ObjectId payerId = u.getId();
 
@@ -87,7 +87,7 @@ public class ExpenseService {
                         .mapToDouble(Expenses.SplitDetail::getPercentage).sum();
 
                 if (Math.abs(totalPercentage - 100.0) > 0.01) {
-                    throw new IllegalArgumentException("Percentages must add up to 100%");
+                    return new ResponseEntity<>("Total must be 100",HttpStatus.FORBIDDEN);
                 }
 
                 for (Expenses.SplitDetail detail : expenseRequest.getSplitDetails()) {
@@ -107,7 +107,7 @@ public class ExpenseService {
                         .mapToDouble(Expenses.SplitDetail::getShareAmount).sum();
 
                 if (Math.abs(total - amount) > 0.01) { // tolerance for floating-point errors
-                    throw new IllegalArgumentException("Custom split amounts do not add up to total expense");
+                    return new ResponseEntity<>("not matching the total amount",HttpStatus.FORBIDDEN);
                 }
 
                 for (Expenses.SplitDetail detail : expenseRequest.getSplitDetails()) {
@@ -130,6 +130,7 @@ public class ExpenseService {
             expense.setAmount(amount);
             expense.setPayername(expenseRequest.getPayername());
             expense.setGroup(group.getId());
+            expense.setAdder(adder.getName());
             expense.setCurrency(expenseRequest.getCurrency());
             expense.setGroupcode(expenseRequest.getGroupcode());
             expense.setPayer(payerId);
@@ -153,26 +154,33 @@ public class ExpenseService {
     public ResponseEntity<?> deleteexpense(ObjectId eid) throws Exception {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (!auth.isAuthenticated()){
+        if (!auth.isAuthenticated()) {
             return new ResponseEntity<>("You are not authenticated", HttpStatus.FORBIDDEN);
         }
+
         users u = userRepo.findByemail(auth.getName());
         Expenses e = expenseRepo.findByid(eid);
-        if (e == null){
-            return new ResponseEntity<>("Expense not found",HttpStatus.FORBIDDEN);
+        if (e == null) {
+            return new ResponseEntity<>("Expense not found", HttpStatus.FORBIDDEN);
         }
-        if (!u.getId().equals(e.getAddedBy())){
-            return new ResponseEntity<>("You can not delete this expense",HttpStatus.FORBIDDEN);
+        System.out.println("User ID: " + u.getId());
+        System.out.println("Expense addedBy: " + e.getAddedBy());
+
+        // ✅ Fix: compare IDs as Strings
+        if (!u.getId().toString().equals(e.getAddedBy().toString())) {
+            return new ResponseEntity<>("You can not delete this expense", HttpStatus.FORBIDDEN);
         }
-        if(u.getGroups().contains(e.getGroup())){
+
+        if (u.getGroups().contains(e.getGroup())) {
             Groups g = groupRepo.findByid(e.getGroup());
             g.getExpenses().remove(eid);
             groupRepo.save(g);
             settlementService.updateSettlementOnExpenseDelete(e);
             expenseRepo.delete(e);
-            return new ResponseEntity<>("Expense Deleted",HttpStatus.OK);
+            return new ResponseEntity<>("Expense Deleted", HttpStatus.OK);
         }
-        return new ResponseEntity<>("You can not delete the expense as you are not the part of the group",HttpStatus.FORBIDDEN);
 
+        return new ResponseEntity<>("You can not delete the expense as you are not the part of the group", HttpStatus.FORBIDDEN);
     }
+
 }

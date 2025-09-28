@@ -2,40 +2,60 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import api from "../api/axios";
 
-export default function GroupDetails({ selectedGroup, onBack }) {
+export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
   const [groupData, setGroupData] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [members, setMembers] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [loadingExpenses, setLoadingExpenses] = useState(false);
+
+  const [selectedExpense, setSelectedExpense] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newExpense, setNewExpense] = useState({
+    description: "",
+    amount: "",
+    currency: "INR",
+    splitType: "EQUAL",
+    payername: "",
+    date: new Date().toISOString().slice(0, 10),
+    splitDetails: [],
+  });
+
+  const filteredExpenses = expenses.filter((exp) =>
+    exp.description.toLowerCase().includes(searchQuery?.toLowerCase() || "")
+  );
+
+  // Fetch final settlements
+  const fetchTransactions = async () => {
+    setLoading(true);
+    try {
+      const response = await api.post(
+        "/Groups/Get-Transactions",
+        selectedGroup.code,
+        {
+          headers: {
+            "Content-Type": "text/plain",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setGroupData(response.data);
+      setTransactions(response.data.transactions || []);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to load transactions");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!selectedGroup) return;
 
-    const fetchTransactions = async () => {
-      setLoading(true);
-      try {
-        const response = await api.post(
-          "/Groups/Get-Transactions",
-          selectedGroup.code,
-          {
-            headers: {
-              "Content-Type": "text/plain",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        setGroupData(response.data);
-        setTransactions(response.data.transactions || []);
-      } catch (error) {
-        console.error("Failed to load transactions:", error);
-        toast.error(
-          error.response?.data?.message || "Failed to load transactions"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchTransactions();
 
     const fetchMembers = async () => {
       setLoadingMembers(true);
@@ -54,54 +74,93 @@ export default function GroupDetails({ selectedGroup, onBack }) {
                 }
               );
               return { name: res.data };
-            } catch (err) {
-              console.error(`Failed to fetch member ${id}:`, err);
+            } catch {
               return { name: `Unknown (${id})` };
             }
           })
         );
         setMembers(fetchedMembers);
-      } catch (error) {
-        console.error("Failed to load members:", error);
+      } catch {
         toast.error("Failed to load group members");
       } finally {
         setLoadingMembers(false);
       }
     };
 
-    fetchTransactions();
+    const fetchExpenses = async () => {
+      setLoadingExpenses(true);
+      try {
+        const response = await api.get(
+          `/Groups/Get-Expenses/${selectedGroup.code}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const data = Array.isArray(response.data)
+          ? response.data
+          : [response.data];
+        setExpenses(data);
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Failed to load expenses");
+      } finally {
+        setLoadingExpenses(false);
+      }
+    };
+
     fetchMembers();
+    fetchExpenses();
   }, [selectedGroup]);
 
-  // 🔴 Delete Group Handler
   const handleDeleteGroup = async () => {
     if (!selectedGroup) return;
-
     if (!window.confirm("Are you sure you want to delete this group?")) return;
 
     try {
-
       const response = await api.delete("/Groups/Delete-Group", {
         headers: {
           "Content-Type": "text/plain",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        data: selectedGroup.code,  // 👈 put body inside "data"
+        data: selectedGroup.code,
       });
 
-
       if (response.status === 200) {
-        // ✅ Navigate to dashboard (remove group)
         onBack();
       } else {
-        // ❌ Show backend error
         toast.error(response.data?.message || "Failed to delete group");
       }
     } catch (error) {
-      console.error("Delete group failed:", error);
-      toast.error(
-        error.response?.data || "Failed to delete group"
-      );
+      toast.error(error.response?.data || "Failed to delete group");
+    }
+  };
+
+  // 🔹 Delete Expense
+  const handleDeleteExpense = async (eid) => {
+    if (!window.confirm("Are you sure you want to delete this expense?")) return;
+
+    try {
+      const response = await api.delete("/Expense/Delete", {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        data: { id: eid },
+      });
+
+      toast.success(response.data || "Expense deleted successfully!");
+
+      // Refresh expenses
+      const res = await api.get(`/Groups/Get-Expenses/${selectedGroup.code}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      setExpenses(Array.isArray(res.data) ? res.data : [res.data]);
+
+      // Refresh final settlements
+      await fetchTransactions();
+    } catch (err) {
+      toast.error(err.response?.data || "Failed to delete expense");
     }
   };
 
@@ -122,13 +181,23 @@ export default function GroupDetails({ selectedGroup, onBack }) {
 
   return (
     <div className="w-full max-w-4xl mx-auto mt-10 px-4 flex flex-col gap-6">
+      {/* Top Buttons */}
       <div className="flex justify-between items-center gap-x-2">
-        <button
-          onClick={onBack}
-          className="cursor-pointer px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-        >
-          ← Back to Groups
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={onBack}
+            className="cursor-pointer px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+          >
+            ← Back to Groups
+          </button>
+
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="cursor-pointer px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+          >
+            ➕ Add Expense
+          </button>
+        </div>
 
         <button
           onClick={handleDeleteGroup}
@@ -138,7 +207,7 @@ export default function GroupDetails({ selectedGroup, onBack }) {
         </button>
       </div>
 
-
+      {/* Group Info */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h1 className="text-3xl font-bold">
           {groupData?.name || selectedGroup.name}
@@ -177,7 +246,6 @@ export default function GroupDetails({ selectedGroup, onBack }) {
       {/* Transactions Section */}
       <div className="bg-white rounded-xl shadow p-6 flex flex-col gap-4">
         <h2 className="text-xl font-semibold mb-2">Final Settlements</h2>
-
         {loading ? (
           <div className="flex flex-col items-center justify-center py-10 gap-2">
             <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -201,6 +269,368 @@ export default function GroupDetails({ selectedGroup, onBack }) {
           <div className="text-gray-500">No transactions yet.</div>
         )}
       </div>
+
+      {/* Expenses Section */}
+      <div className="bg-white rounded-xl shadow p-6 flex flex-col gap-4">
+        <h2 className="text-xl font-semibold mb-2">Expenses</h2>
+        {loadingExpenses ? (
+          <div className="flex justify-center items-center py-6">
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : filteredExpenses.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {filteredExpenses.map((exp, i) => (
+              <div
+                key={i}
+                className="border rounded-xl shadow-sm p-4 flex flex-col justify-between"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <h3 className="text-lg font-semibold text-gray-900">{exp.description}</h3>
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                    <p className="text-red-600 font-bold">
+                      ₹{exp.amount?.toFixed(2) || 0}
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      <span className="font-medium">Added by:</span> {exp.adder}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => {
+                      setSelectedExpense(exp);
+                      setIsModalOpen(true);
+                    }}
+                    className="flex-1 cursor-pointer px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                  >
+                    View
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteExpense(exp.id)}
+                    className="flex-1 cursor-pointer px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No expenses recorded yet.</p>
+        )}
+      </div>
+
+      {/* View Expense Modal */}
+      {isModalOpen && selectedExpense && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-0">
+          <div
+            className="absolute inset-0 backdrop-blur-sm"
+            onClick={() => setIsModalOpen(false)}
+          ></div>
+          <div className="relative bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md sm:max-w-lg z-50 border border-gray-200">
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-lg cursor-pointer"
+            >
+              ✖
+            </button>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+              <b>Description:</b> {selectedExpense.description}
+            </h2>
+            <div className="space-y-2 sm:space-y-3 mb-6 text-sm sm:text-base">
+              <p className="text-gray-700">
+                <span className="font-semibold">Payer:</span> {selectedExpense.payername}
+              </p>
+              <p className="text-gray-700">
+                <span className="font-semibold">Amount:</span> ₹{selectedExpense.amount?.toFixed(2) || 0}
+              </p>
+              <p className="text-gray-700">
+                <span className="font-semibold">Split Type:</span> {selectedExpense.splitType || "Equal"}
+              </p>
+              <p className="text-gray-700">
+                <span className="font-semibold">Date:</span>{" "}
+                {selectedExpense.date
+                  ? new Date(selectedExpense.date).toLocaleDateString("en-IN", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })
+                  : "N/A"}
+              </p>
+            </div>
+            <br />
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">
+              Split Details
+            </h3>
+            <div className="space-y-2">
+              {selectedExpense.splitDetails?.map((sd, j) => (
+                <div
+                  key={j}
+                  className="flex justify-between items-center bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200"
+                >
+                  <span className="font-medium text-gray-700 text-sm sm:text-base">{sd.name}</span>
+                  <span className="text-green-600 font-semibold text-sm sm:text-base">
+                    {sd.shareAmount ? `₹${sd.shareAmount.toFixed(2)}` : `${sd.percentage}%`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Add Expense Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-0">
+          <div
+            className="absolute inset-0 backdrop-blur-sm"
+            onClick={() => setIsAddModalOpen(false)}
+          ></div>
+
+          <div className="relative bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md sm:max-w-lg z-50 border border-gray-200">
+            {/* Close button */}
+            <button
+              onClick={() => setIsAddModalOpen(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-lg cursor-pointer"
+            >
+              ✖
+            </button>
+
+            {/* Title */}
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+              Add Expense
+            </h2>
+
+            <div className="flex flex-col gap-3">
+              {/* Description */}
+              <input
+                type="text"
+                placeholder="Description"
+                value={newExpense.description}
+                onChange={(e) =>
+                  setNewExpense({ ...newExpense, description: e.target.value })
+                }
+                className="border p-2 rounded"
+              />
+
+              {/* Amount */}
+              <input
+                type="number"
+                placeholder="Amount"
+                value={newExpense.amount}
+                onChange={(e) =>
+                  setNewExpense({
+                    ...newExpense,
+                    amount: parseFloat(e.target.value),
+                  })
+                }
+                className="border p-2 rounded"
+              />
+
+              {/* Payer */}
+              <select
+                value={newExpense.payername}
+                onChange={(e) =>
+                  setNewExpense({ ...newExpense, payername: e.target.value })
+                }
+                className="border p-2 rounded"
+              >
+                <option value="">Select Payer</option>
+                {members.map((m, idx) => (
+                  <option key={idx} value={m.name}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+
+              {/* Date */}
+              <input
+                type="date"
+                value={newExpense.date}
+                onChange={(e) =>
+                  setNewExpense({ ...newExpense, date: e.target.value })
+                }
+                className="border p-2 rounded"
+              />
+
+              {/* Split Type */}
+              <select
+                value={newExpense.splitType}
+                onChange={(e) =>
+                  setNewExpense({
+                    ...newExpense,
+                    splitType: e.target.value,
+                    splitDetails: [],
+                  })
+                }
+                className="border p-2 rounded"
+              >
+                <option value="EQUAL">Equal</option>
+                <option value="CUSTOM">Custom</option>
+                <option value="PERCENTAGE">By Percentage</option>
+              </select>
+
+              {/* Split Details */}
+              {(newExpense.splitType === "CUSTOM" ||
+                newExpense.splitType === "PERCENTAGE") && (
+                  <div className="flex flex-col gap-2">
+                    <h3 className="font-medium">Split Details</h3>
+
+                    {newExpense.splitDetails.map((sd, idx) => (
+                      <div key={idx} className="flex gap-2">
+                        {/* ✅ Name as Select Dropdown */}
+                        {/* Name as Select Dropdown */}
+                        <select
+                          value={sd.name}
+                          onChange={(e) => {
+                            const updated = [...newExpense.splitDetails];
+                            updated[idx].name = e.target.value;
+                            setNewExpense({ ...newExpense, splitDetails: updated });
+                          }}
+                          className="border p-1 rounded flex-1"
+                        >
+                          <option value="">Select Member</option>
+                          {members
+                            // Remove already chosen members except the current one
+                            .filter(
+                              (m) =>
+                                !newExpense.splitDetails.some(
+                                  (detail, i) => detail.name === m.name && i !== idx
+                                )
+                            )
+                            .map((m, i) => (
+                              <option key={i} value={m.name}>
+                                {m.name}
+                              </option>
+                            ))}
+                        </select>
+
+
+                        {/* Amount or Percentage */}
+                        {newExpense.splitType === "CUSTOM" ? (
+                          <input
+                            type="number"
+                            placeholder="Share Amount"
+                            value={sd.shareAmount}
+                            onChange={(e) => {
+                              const updated = [...newExpense.splitDetails];
+                              updated[idx].shareAmount = parseFloat(e.target.value);
+                              setNewExpense({ ...newExpense, splitDetails: updated });
+                            }}
+                            className="border p-1 rounded w-24"
+                          />
+                        ) : (
+                          <input
+                            type="number"
+                            placeholder="Percentage"
+                            value={sd.percentage}
+                            onChange={(e) => {
+                              const updated = [...newExpense.splitDetails];
+                              updated[idx].percentage = parseFloat(e.target.value);
+                              setNewExpense({ ...newExpense, splitDetails: updated });
+                            }}
+                            className="border p-1 rounded w-24"
+                          />
+                        )}
+
+                        {/* Remove Person */}
+                        <button
+                          onClick={() => {
+                            const updated = newExpense.splitDetails.filter(
+                              (_, i) => i !== idx
+                            );
+                            setNewExpense({ ...newExpense, splitDetails: updated });
+                          }}
+                          className="bg-red-500 text-white px-2 rounded"
+                        >
+                          ✖
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Add Person */}
+                    <button
+                      onClick={() =>
+                        setNewExpense({
+                          ...newExpense,
+                          splitDetails: [
+                            ...newExpense.splitDetails,
+                            { name: "", shareAmount: 0, percentage: 0 },
+                          ],
+                        })
+                      }
+                      className="bg-blue-500 text-white px-3 py-1 rounded mt-1"
+                    >
+                      + Add Person
+                    </button>
+                  </div>
+                )}
+
+              {/* Save Button */}
+              <button
+                onClick={async () => {
+                  try {
+                    const payload = {
+                      description: newExpense.description,
+                      amount: parseFloat(newExpense.amount),
+                      currency: "INR",
+                      groupcode: selectedGroup.code,
+                      splitType: newExpense.splitType,
+                      payername: newExpense.payername,
+                      date: newExpense.date,
+                      splitDetails:
+                        newExpense.splitType === "EQUAL"
+                          ? []
+                          : newExpense.splitDetails,
+                    };
+
+                    await api.post("/Expense/Create", payload, {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                      },
+                    });
+
+                    toast.success("Expense added successfully!");
+                    setIsAddModalOpen(false);
+                    setNewExpense({
+                      description: "",
+                      amount: "",
+                      currency: "INR",
+                      splitType: "EQUAL",
+                      payername: "",
+                      date: new Date().toISOString().slice(0, 10),
+                      splitDetails: [],
+                    });
+
+                    // 🔹 Refresh expenses
+                    const res = await api.get(
+                      `/Groups/Get-Expenses/${selectedGroup.code}`,
+                      {
+                        headers: {
+                          Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        },
+                      }
+                    );
+                    setExpenses(Array.isArray(res.data) ? res.data : [res.data]);
+
+                    // 🔹 Refresh settlements
+                    await fetchTransactions();
+                  } catch (err) {
+                    toast.error(err.response?.data || "Failed to add expense");
+                  }
+                }}
+                className="mt-3 px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+              >
+                Save Expense
+              </button>
+            </div>
+          </div>
+        </div>
+
+      )}
     </div>
   );
 }
+
