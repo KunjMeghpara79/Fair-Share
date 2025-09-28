@@ -11,6 +11,7 @@ function LoadingDots() {
   const [dots, setDots] = useState("");
 
   useEffect(() => {
+    
     const interval = setInterval(() => {
       setDots((prev) => (prev.length >= 4 ? "" : prev + "."));
     }, 500);
@@ -48,6 +49,8 @@ export default function Auth() {
   }, []);
 
   useEffect(() => {
+    console.log("Mode:", mode   );
+    
     document.title = "Login || Register";
     const timer = setTimeout(() => setMode("sign-in"), 200);
     return () => clearTimeout(timer);

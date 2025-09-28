@@ -43,6 +43,19 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    const handlePop = () => {
+      if (instate) {
+        setSelectedGroup(null);
+        setInstate(false);
+        fetchGroups();
+        setSearchQuery("");
+      }
+    };
+
+    window.addEventListener("popstate", handlePop);
+    return () => window.removeEventListener("popstate", handlePop);
+  }, [instate]);
 
   useEffect(() => {
     if (!token) return navigate("/"); // redirect if no token
@@ -56,7 +69,29 @@ export default function Dashboard() {
     localStorage.removeItem("name");
     navigate("/");
   };
+  const handleDeleteGroup = async (code) => {
 
+    if (!window.confirm("Are you sure you want to delete this group?")) return;
+
+    try {
+      const response = await api.delete("/Groups/Delete-Group", {
+        headers: {
+          "Content-Type": "text/plain",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        data: code,
+      });
+
+      if (response.status === 200) {
+        fetchGroups();
+        toast.success("Group deleted successfully");
+      } else {
+        toast.error(response.data || "Failed to delete group");
+      }
+    } catch (error) {
+      toast.error(error.response?.data || "Failed to delete group");
+    }
+  };
   // ------------------- JOIN GROUP -------------------
   const handleJoinGroup = async () => {
     if (!groupCodeInput) return;
@@ -121,31 +156,51 @@ export default function Dashboard() {
           <span>Code: {code}</span>
           <span>Created on {formattedDate}</span>
         </div>
-        <button
-          onClick={async () => {
-            setInstate(true);
-             setSearchQuery("");
-            try {
-              const res = await api.post(
-                "/Groups/Get-Groupbycode",
-                code,
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "text/plain",
-                  },
-                }
-              );
-              setSelectedGroup({ name: res.data.name, members: res.data.members, code: res.data.groupcode, CreatedAt: res.data.CreatedAt, description: res.data.description });
-            } catch (err) {
-              console.error("Failed to fetch group:", err);
-              toast.error("Failed to load group", { position: "top-center" });
-            }
-          }}
-          className="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-400 text-white py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-xl hover:scale-105 cursor-pointer"
-        >
-          ₹ View Expenses
-        </button>
+        <div className="flex gap-1 justify-center`">
+          <button
+            onClick={async () => {
+              setInstate(true);
+              setSearchQuery("");
+
+              // 👇 push a fake history entry so browser back works
+              window.history.pushState({ group: code }, "");
+
+              try {
+                const res = await api.post(
+                  "/Groups/Get-Groupbycode",
+                  code,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      "Content-Type": "text/plain",
+                    },
+                  }
+                );
+                setSelectedGroup({
+                  name: res.data.name,
+                  members: res.data.members,
+                  code: res.data.groupcode,
+                  CreatedAt: res.data.CreatedAt,
+                  description: res.data.description
+                });
+              } catch (err) {
+                console.error("Failed to fetch group:", err);
+                toast.error("Failed to load group", { position: "top-center" });
+              }
+            }}
+            className="flex w-35 h-10 items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-400 text-white font-bold rounded-2xl shadow-md hover:shadow-xl transition cursor-pointer "
+          >
+            ₹ View
+          </button>
+          <button
+            onClick={() => handleDeleteGroup(code)}
+
+            className="flex h-10 w-35 items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-red-500 to-red-400 text-white font-bold rounded-2xl shadow-md hover:shadow-xl transition cursor-pointer "
+          >
+            🗑 Delete
+          </button>
+        </div>
+
       </div>
     );
   }

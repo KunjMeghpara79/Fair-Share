@@ -163,8 +163,7 @@ public class ExpenseService {
         if (e == null) {
             return new ResponseEntity<>("Expense not found", HttpStatus.FORBIDDEN);
         }
-        System.out.println("User ID: " + u.getId());
-        System.out.println("Expense addedBy: " + e.getAddedBy());
+
 
         // ✅ Fix: compare IDs as Strings
         if (!u.getId().toString().equals(e.getAddedBy().toString())) {

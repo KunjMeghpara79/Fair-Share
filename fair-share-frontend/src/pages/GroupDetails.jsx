@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import api from "../api/axios";
+import { AiOutlinePlus } from "react-icons/ai";
 
 export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
   const [groupData, setGroupData] = useState(null);
@@ -113,28 +114,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
     fetchExpenses();
   }, [selectedGroup]);
 
-  const handleDeleteGroup = async () => {
-    if (!selectedGroup) return;
-    if (!window.confirm("Are you sure you want to delete this group?")) return;
-
-    try {
-      const response = await api.delete("/Groups/Delete-Group", {
-        headers: {
-          "Content-Type": "text/plain",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        data: selectedGroup.code,
-      });
-
-      if (response.status === 200) {
-        onBack();
-      } else {
-        toast.error(response.data?.message || "Failed to delete group");
-      }
-    } catch (error) {
-      toast.error(error.response?.data || "Failed to delete group");
-    }
-  };
+  
 
   // 🔹 Delete Expense
   const handleDeleteExpense = async (eid) => {
@@ -182,30 +162,20 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
   return (
     <div className="w-full max-w-4xl mx-auto mt-10 px-4 flex flex-col gap-6">
       {/* Top Buttons */}
-      <div className="flex justify-between items-center gap-x-2">
-        <div className="flex gap-2">
-          <button
-            onClick={onBack}
-            className="cursor-pointer px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-          >
-            ← Back to Groups
-          </button>
-
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="cursor-pointer px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
-          >
-            ➕ Add Expense
-          </button>
-        </div>
-
+      <div className="w-full max-w-4xl mx-auto mt-10  flex justify-start sm:justify-between items-center gap-2">
+        {/* Add Expense Button */}
         <button
-          onClick={handleDeleteGroup}
-          className="cursor-pointer px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+          onClick={() => setIsAddModalOpen(true)}
+          className="flex items-center pl-2 justify-center  gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-400 text-white font-bold rounded-2xl shadow-md hover:shadow-xl transition cursor-pointer min-w-[140px]"
         >
-          🗑 Delete Group
+          <AiOutlinePlus className="text-white" size={20} /> Add Expense
         </button>
+
+        {/* Delete Group Button */}
+        
       </div>
+
+
 
       {/* Group Info */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -284,7 +254,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                 key={i}
                 className="border rounded-xl shadow-sm p-4 flex flex-col justify-between"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center mb-15 sm:justify-between gap-2">
                   <h3 className="text-lg font-semibold text-gray-900">{exp.description}</h3>
                   <div className="flex flex-wrap items-center gap-4 sm:gap-6">
                     <p className="text-red-600 font-bold">
@@ -314,6 +284,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                     Delete
                   </button>
                 </div>
+                
               </div>
             ))}
           </div>
@@ -401,8 +372,8 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Add Expense
             </h2>
-
-            <div className="flex flex-col gap-3">
+            <br />
+            <div className="flex flex-col gap-3 w-full max-w-md mx-auto p-2 sm:p-4">
               {/* Description */}
               <input
                 type="text"
@@ -411,7 +382,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                 onChange={(e) =>
                   setNewExpense({ ...newExpense, description: e.target.value })
                 }
-                className="border p-2 rounded"
+                className="border p-2 rounded-xl w-full"
               />
 
               {/* Amount */}
@@ -425,7 +396,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                     amount: parseFloat(e.target.value),
                   })
                 }
-                className="border p-2 rounded"
+                className="border p-2 rounded-xl w-full"
               />
 
               {/* Payer */}
@@ -434,9 +405,11 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                 onChange={(e) =>
                   setNewExpense({ ...newExpense, payername: e.target.value })
                 }
-                className="border p-2 rounded"
+                className="border p-2 rounded-xl w-full"
               >
-                <option value="">Select Payer</option>
+                <option value="" disabled hidden>
+                  Select Payer
+                </option>
                 {members.map((m, idx) => (
                   <option key={idx} value={m.name}>
                     {m.name}
@@ -451,7 +424,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                 onChange={(e) =>
                   setNewExpense({ ...newExpense, date: e.target.value })
                 }
-                className="border p-2 rounded"
+                className="border p-2 rounded-xl w-full"
               />
 
               {/* Split Type */}
@@ -464,7 +437,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                     splitDetails: [],
                   })
                 }
-                className="border p-2 rounded"
+                className="border p-2 rounded-xl w-full"
               >
                 <option value="EQUAL">Equal</option>
                 <option value="CUSTOM">Custom</option>
@@ -478,9 +451,11 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                     <h3 className="font-medium">Split Details</h3>
 
                     {newExpense.splitDetails.map((sd, idx) => (
-                      <div key={idx} className="flex gap-2">
-                        {/* ✅ Name as Select Dropdown */}
-                        {/* Name as Select Dropdown */}
+                      <div
+                        key={idx}
+                        className="flex flex-col sm:flex-row gap-2 items-center"
+                      >
+                        {/* Name Dropdown */}
                         <select
                           value={sd.name}
                           onChange={(e) => {
@@ -488,11 +463,10 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                             updated[idx].name = e.target.value;
                             setNewExpense({ ...newExpense, splitDetails: updated });
                           }}
-                          className="border p-1 rounded flex-1"
+                          className="border p-2 rounded-xl flex-1 w-full sm:w-auto"
                         >
                           <option value="">Select Member</option>
                           {members
-                            // Remove already chosen members except the current one
                             .filter(
                               (m) =>
                                 !newExpense.splitDetails.some(
@@ -506,8 +480,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                             ))}
                         </select>
 
-
-                        {/* Amount or Percentage */}
+                        {/* Amount / Percentage */}
                         {newExpense.splitType === "CUSTOM" ? (
                           <input
                             type="number"
@@ -518,7 +491,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                               updated[idx].shareAmount = parseFloat(e.target.value);
                               setNewExpense({ ...newExpense, splitDetails: updated });
                             }}
-                            className="border p-1 rounded w-24"
+                            className="border p-2 rounded-xl w-full sm:w-24"
                           />
                         ) : (
                           <input
@@ -530,7 +503,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                               updated[idx].percentage = parseFloat(e.target.value);
                               setNewExpense({ ...newExpense, splitDetails: updated });
                             }}
-                            className="border p-1 rounded w-24"
+                            className="border p-2 rounded-xl w-full sm:w-24"
                           />
                         )}
 
@@ -542,7 +515,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                             );
                             setNewExpense({ ...newExpense, splitDetails: updated });
                           }}
-                          className="bg-red-500 text-white px-2 rounded"
+                          className="cursor-pointer bg-red-500 text-white px-3 py-1 rounded-xl w-full sm:w-auto"
                         >
                           ✖
                         </button>
@@ -551,16 +524,20 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
 
                     {/* Add Person */}
                     <button
-                      onClick={() =>
-                        setNewExpense({
-                          ...newExpense,
-                          splitDetails: [
-                            ...newExpense.splitDetails,
-                            { name: "", shareAmount: 0, percentage: 0 },
-                          ],
-                        })
-                      }
-                      className="bg-blue-500 text-white px-3 py-1 rounded mt-1"
+                      onClick={() => {
+                        if (newExpense.splitDetails.length < members.length) {
+                          setNewExpense({
+                            ...newExpense,
+                            splitDetails: [
+                              ...newExpense.splitDetails,
+                              { name: "", shareAmount: 0, percentage: 0 },
+                            ],
+                          });
+                        } else {
+                          alert("You cannot add more people than group members!");
+                        }
+                      }}
+                      className="cursor-pointer bg-blue-500 text-white px-3 py-2 rounded-xl mt-2 w-full sm:w-auto"
                     >
                       + Add Person
                     </button>
@@ -621,11 +598,12 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                     toast.error(err.response?.data || "Failed to add expense");
                   }
                 }}
-                className="mt-3 px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                className="cursor-pointer bg-green-500 text-white px-3 py-2 rounded-xl mt-2 w-full sm:w-auto"
               >
                 Save Expense
               </button>
             </div>
+
           </div>
         </div>
 
