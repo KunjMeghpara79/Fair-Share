@@ -80,7 +80,9 @@ export default function Auth() {
     }
 
     try {
-      const res = await fetch("http://localhost:8080/Register", {
+      console.log(`${import.meta.env.VITE_API_URL}Register`);
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}Register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
@@ -100,7 +102,7 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8080/Login", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}Login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -132,7 +134,7 @@ export default function Auth() {
     try {
       const googleToken = credentialResponse.credential;
 
-      const res = await fetch("http://localhost:8080/api/auth/google", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}api/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: googleToken }),
@@ -159,7 +161,7 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8080/forgot-password", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
         body: forgotEmail,
@@ -179,7 +181,7 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8080/verify-otp", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail, otp }),
@@ -210,7 +212,7 @@ export default function Auth() {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8080/change-password", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}change-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail, password: newPassword }),

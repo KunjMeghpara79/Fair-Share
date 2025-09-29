@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -18,9 +19,13 @@ import java.io.IOException;
 public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtService jwtService;
+    @Value("${frontend.url}")
+    private String frontendurl;
+
 
     @Autowired
     private UserRepo urepo;
+
 
     public CustomOAuth2SuccessHandler(JwtService jwtService) {
         this.jwtService = jwtService;
@@ -37,7 +42,7 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
 
 
         if (email == null) {
-            response.sendRedirect("http://localhost:5173/login?error=email_not_found");
+            response.sendRedirect(frontendurl + "/login?error=email_not_found");
             return;
         }
 
@@ -50,7 +55,7 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         String Email =u.getEmail();
 
 
-        String redirectUrl = "http://localhost:5173/dashboard?token=" + jwt
+        String redirectUrl = frontendurl+"/dashboard?token=" + jwt
                 + "&name=" + name
                 + "&email=" + Email;
 

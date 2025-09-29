@@ -3,6 +3,7 @@ package com.expense_splitter.Fair_Share.Config;
 import com.expense_splitter.Fair_Share.Service.CustomUserDetailsService;
 import com.expense_splitter.Fair_Share.Service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -56,10 +57,13 @@ public class WebSecurityConfig {
         return httpSecurity.build();
     }
 
+    @Value("${frontend.url}")
+    private String frontendurl;
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173")); // frontend URL
+        configuration.setAllowedOrigins(List.of(frontendurl)); // frontend URL
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
