@@ -33,3 +33,4 @@ build/
 ### VS Code ###
 .vscode/
 *.env
+Fair-Share-backend/.env

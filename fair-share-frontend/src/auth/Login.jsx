@@ -343,7 +343,8 @@ export default function Auth() {
                 </button>
 
                 {/* Google login */}
-                <div style={{ width: "50%", marginTop: "10px", marginLeft: "25%" }}>
+                <div style={{ width: "50%", marginTop: "10px", marginLeft: "auto", marginRight: "auto" }}>
+
 
                   <GoogleLogin
                     onSuccess={handleGoogleLoginSuccess}
