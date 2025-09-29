@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import api from "../api/axios";
 import { AiOutlinePlus } from "react-icons/ai";
 
+
 export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
   const [groupData, setGroupData] = useState(null);
   const [transactions, setTransactions] = useState([]);
