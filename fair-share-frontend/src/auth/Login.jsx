@@ -11,7 +11,7 @@ function LoadingDots() {
   const [dots, setDots] = useState("");
 
   useEffect(() => {
-    
+
     const interval = setInterval(() => {
       setDots((prev) => (prev.length >= 4 ? "" : prev + "."));
     }, 500);
@@ -49,8 +49,8 @@ export default function Auth() {
   }, []);
 
   useEffect(() => {
-    console.log("Mode:", mode   );
-    
+    console.log("Mode:", mode);
+
     document.title = "Login || Register";
     const timer = setTimeout(() => setMode("sign-in"), 200);
     return () => clearTimeout(timer);
@@ -332,7 +332,8 @@ export default function Auth() {
                   />{" "}
                   Show Password
                 </label>
-                <button type="submit" disabled={loading}>
+                <div className="h-15">
+                <button type="submit" disabled={loading} className="h-10 my-auto">
                   {loading ? (
                     <>
                       Processing<LoadingDots />
@@ -341,17 +342,16 @@ export default function Auth() {
                     "Sign in"
                   )}
                 </button>
-
+                </div>
+                
                 {/* Google login */}
-                <div style={{ width: "50%", marginTop: "10px", marginLeft: "auto", marginRight: "auto" }}>
-
-
+                <div className="flex justify-center items-center mt-2" >
                   <GoogleLogin
                     onSuccess={handleGoogleLoginSuccess}
                     onError={() => setMessage("❌ Google login failed")}
                   />
-
                 </div>
+
 
                 <p>
                   <b onClick={() => setShowForgot(true)} className="pointer">
