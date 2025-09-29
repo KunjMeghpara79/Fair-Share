@@ -237,7 +237,7 @@ export default function Auth() {
         {/* SIGN UP */}
         <div className="col align-items-center flex-col sign-up">
           <div className="form-wrapper align-items-center">
-            <form className="form sign-up" onSubmit={handleRegister}>
+            <form className="form sign-up"  style={{ marginBottom: "20px" }} onSubmit={handleRegister}>
               {message && <p className="msg">{message}</p>}
               <div className="input-group">
                 <i className="bx bxs-user"></i>
@@ -302,7 +302,7 @@ export default function Auth() {
         <div className="col align-items-center flex-col sign-in">
           <div className="form-wrapper align-items-center">
             {!showForgot ? (
-              <form className="form sign-in" onSubmit={handleLogin}>
+              <form className="form sign-in mb-10" style={{ marginBottom: "20px" }} onSubmit={handleLogin}>
                 {message && <p className="msg">{message}</p>}
                 <div className="input-group">
                   <i className="bx bx-mail-send"></i>
