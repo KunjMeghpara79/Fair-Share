@@ -17,6 +17,8 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [savingExpense, setSavingExpense] = useState(false);
+
   const [newExpense, setNewExpense] = useState({
     description: "",
     amount: "",
@@ -115,7 +117,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
     fetchExpenses();
   }, [selectedGroup]);
 
-  
+
 
   // 🔹 Delete Expense
   const handleDeleteExpense = async (eid) => {
@@ -173,7 +175,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
         </button>
 
         {/* Delete Group Button */}
-        
+
       </div>
 
 
@@ -285,7 +287,7 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                     Delete
                   </button>
                 </div>
-                
+
               </div>
             ))}
           </div>
@@ -547,7 +549,9 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
 
               {/* Save Button */}
               <button
+                disabled={savingExpense}
                 onClick={async () => {
+                  setSavingExpense(true);
                   try {
                     const payload = {
                       description: newExpense.description,
@@ -597,12 +601,28 @@ export default function GroupDetails({ selectedGroup, onBack, searchQuery }) {
                     await fetchTransactions();
                   } catch (err) {
                     toast.error(err.response?.data || "Failed to add expense");
+                  } finally {
+                    setSavingExpense(false);
                   }
                 }}
-                className="cursor-pointer bg-green-500 text-white px-3 py-2 rounded-xl mt-2 w-full sm:w-auto"
+                className={`cursor-pointer px-3 py-2 rounded-xl mt-2 w-full sm:w-auto ${savingExpense
+                    ? "bg-gray-400 text-white cursor-not-allowed"
+                    : "bg-green-500 text-white hover:bg-green-600"
+                  }`}
               >
-                Save Expense
+                {savingExpense ? (
+                  <span className="flex items-center justify-center gap-2">
+                    Saving
+                    <span className="animate-pulse">.</span>
+                    <span className="animate-pulse delay-150">.</span>
+                    <span className="animate-pulse delay-300">.</span>
+                  </span>
+                ) : (
+                  "Save Expense"
+                )}
               </button>
+
+
             </div>
 
           </div>
