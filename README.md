@@ -56,6 +56,16 @@ Sign Up Page
 
 ![Dashboard](./Screenshots/Dashboard) 
 
+
+Group Info 
+
+<img width="469" height="831" alt="image" src="https://github.com/user-attachments/assets/41f936a1-8dd1-4301-9b58-cbe1c4687922" />
+
+Add expense
+
+<img width="469" height="831" alt="image" src="https://github.com/user-attachments/assets/7c784794-a247-4b1c-bead-1915a3f4b3bd" />
+
+
 Group Overview
 
 
